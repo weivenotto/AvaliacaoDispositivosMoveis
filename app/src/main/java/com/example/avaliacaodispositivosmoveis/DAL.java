@@ -16,14 +16,7 @@ class DAL {
         database = new CreateDatabase(context);
     }
 
-    /**
-     * Insere um registro no banco
-     * @param title título do livro
-     * @param author autor do livro
-     * @param publisher editora do livro
-     * @return true se foi possível inserir com sucesso, false caso contrário
-     */
-    boolean insert(String title, String author, String publisher) {
+    boolean insert( Pacientes p) {
         ContentValues values;
         long result;
 
@@ -32,9 +25,12 @@ class DAL {
 
         // Par de nomes de colunas + valores, para atualização no banco
         values = new ContentValues();
-        values.put(CreateDatabase.TITLE, title);
-        values.put(CreateDatabase.AUTHOR, author);
-        values.put(CreateDatabase.PUBLISHER, publisher);
+        values.put(CreateDatabase.NOME, p.getNome());
+        values.put(CreateDatabase.IDADE, p.getIdade());
+        values.put(CreateDatabase.LEUCOCITOS , p.getNumeroDeLeucositos());
+        values.put(CreateDatabase.GLICEMIA, p.getNumeroDeGlucositos());
+        values.put(CreateDatabase.AST, p.getNumeroDeLHD());
+        values.put(CreateDatabase.LDH, p.getNumeroDeLHD());
 
         // efetivamente insere o registro no banco, fechando o acesso em seguida
         result = db.insert(CreateDatabase.TABLE, null, values);
@@ -49,11 +45,6 @@ class DAL {
         return true;
     }
 
-    /**
-     * Remove um registro do banco.
-     * @param id O id do registro a ser removido
-     * @return true em caso de sucesso, false em caso contrário
-     */
     boolean delete(int id) {
         long result;
 
@@ -78,17 +69,8 @@ class DAL {
         return true;
     }
 
-    /**
-     * Atualiza um registro na base de dados
-     * @param id o id do livro
-     * @param title título do livro
-     * @param author autor do livro
-     * @param publisher editora do livro
-     * @return true se foi possível atualizar o registro, false caso contrário.
-     */
-    boolean update(int id, String title, String author, String publisher) {
-        ContentValues values;
-        long result;
+    Cursor findById(int id){
+        Cursor cursor;
 
         // A cláusula where para o update. Note a interrogação. É um "wildcard".
         // Seu valor será inserido pelo contido na variável args
@@ -98,48 +80,12 @@ class DAL {
         // Obtemos um acesso ao banco com permissão de escrita
         db = database.getWritableDatabase();
 
-        // Par de nomes de colunas + valores, para atualização no banco
-        values = new ContentValues();
-        values.put(CreateDatabase.TITLE, title);
-        values.put(CreateDatabase.AUTHOR, author);
-        values.put(CreateDatabase.PUBLISHER, publisher);
-
-        // efetivamente faz o update no banco, fechando o acesso em seguida
-        result = db.update(CreateDatabase.TABLE, values, where, args);
-        db.close();
-
-        // Reporta um erro caso tenha acontecido
-        if (result == -1) {
-            Log.e(TAG, "insert: Erro atualizando registro");
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Busca no banco um registro pelo id.
-     * @param id id do livro.
-     * @return Cursor apontando para o registro do banco que contém o id indicado.
-     */
-    Cursor findById(int id) {
-        Cursor cursor;
-
-        // A cláusula where para o update. Note a interrogação. É um "wildcard".
-        // Seu valor será inserido pelo contido na variável args
-        String where = "_id = ?";
-        String[] args = { String.valueOf(id) };
-
-        // Obtém um acesso ao banco somente leitura
-        db = database.getReadableDatabase();
-
         // Cria uma consulta ao banco. Observe o formato. Ao não passar colunas,
         // temos o equivalente a SELECT *. Esta consulta, em SQL corrente, seria:
         // SELECT * from book WHERE _id = :id (:id é o id passado por parâmetro)
         cursor = db.query(CreateDatabase.TABLE, null,
                 where, args, null, null, null, null);
-
-        if (cursor != null) {
+        if (cursor != null){
             cursor.moveToFirst();
         }
 
@@ -149,14 +95,10 @@ class DAL {
 
     Cursor loadAll() {
         Cursor cursor;
-        String[] fields = {CreateDatabase.ID, CreateDatabase.TITLE};
+        String[] fields = {CreateDatabase.ID, CreateDatabase.NOME};
         db = database.getReadableDatabase();
 
-        // SELECT _id, title FROM book
-        // Consulta equivalente:
-        // String sql = "SELECT _id, title FROM book";
-        // cursor = db.rawQuery(sql, null);
-        cursor = db.query(CreateDatabase.TABLE, fields, null,
+        cursor = db.query(CreateDatabase.TABLE, null,
                 null, null, null,
                 null, null);
 
